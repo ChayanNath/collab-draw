@@ -1,35 +1,35 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
-import { CreateUserSchema } from "@workspace/common/types";
+import { SignInSchema } from "@workspace/common/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import axios from "axios";
-import Link from "next/link";
 
-type SignupFormData = z.infer<typeof CreateUserSchema>;
+type SignupFormData = z.infer<typeof SignInSchema>;
 
-export function SignUpForm() {
+export function SignInForm() {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<SignupFormData>({
-    resolver: zodResolver(CreateUserSchema),
+    resolver: zodResolver(SignInSchema),
   });
 
   const router = useRouter();
 
   const onSubmit = async (data: SignupFormData) => {
     try {
-      const response = await axios.post("/api/v1/signup", data);
+      const response = await axios.post("/api/signup", data);
       if (response.status === 201) {
         console.log("Signup successful:", response.data);
-        router.push("/signin");
+        router.push("/dashboard");
       }
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -41,19 +41,6 @@ export function SignUpForm() {
   };
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          type="text"
-          {...register("name")}
-          placeholder="John Doe"
-          required
-        />
-        {errors.name && (
-          <span className="text-red-500 text-sm">{errors.name.message}</span>
-        )}
-      </div>
       <div>
         <Label htmlFor="email">Email</Label>
         <Input
@@ -82,10 +69,10 @@ export function SignUpForm() {
         )}
       </div>
       <Button type="submit" className="w-full">
-        Sign Up
+        Sign In
       </Button>
       <Link className="text-sm" href={"/signup"}>
-        Already have an account? Signin
+        Dont have an account? Signup
       </Link>
     </form>
   );
