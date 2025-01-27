@@ -43,3 +43,44 @@ export const createRoom = async (req: Request, res: Response): Promise<any> => {
     console.log(error);
   }
 };
+
+export const getRoom = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const slug = req.params.slug;
+    if (!slug) {
+      res.status(400).json({ message: "Invalid request" });
+      return;
+    }
+    const room = await prismaClient.room.findUnique({
+      where: {
+        slug: slug,
+      },
+    });
+    if (!room) {
+      res.status(400).json({ message: "Room not found" });
+      return;
+    }
+    res.status(200).json({ message: "Room retrieved successfully", room });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+  }
+};
+
+export const getAllRooms = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
+  try {
+    const rooms = await prismaClient.room.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    console.log(rooms);
+    res.status(200).json({ message: "Rooms retrieved successfully", rooms });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+    console.log(error);
+  }
+};

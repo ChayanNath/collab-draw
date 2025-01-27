@@ -10,10 +10,16 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import axios from "axios";
 import Link from "next/link";
+import { BACKEND_URL } from "@/config";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type SignupFormData = z.infer<typeof CreateUserSchema>;
 
 export function SignUpForm() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -26,17 +32,23 @@ export function SignUpForm() {
 
   const onSubmit = async (data: SignupFormData) => {
     try {
-      const response = await axios.post("/api/v1/signup", data);
+      setLoading(true);
+      setError(null);
+      const response = await axios.post(`${BACKEND_URL}/auth/signup`, data);
       if (response.status === 201) {
         console.log("Signup successful:", response.data);
         router.push("/signin");
       }
+      setLoading(false);
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Axios error:", error.response?.data || error.message);
+        setError(error.response?.data || error.message);
       } else {
         console.error("Unexpected error:", error);
+        setError("Unexpected error");
       }
+      setLoading(false);
     }
   };
   return (
@@ -82,11 +94,12 @@ export function SignUpForm() {
         )}
       </div>
       <Button type="submit" className="w-full">
-        Sign Up
+        Sign Up {loading && <Loader2 className="animate-spin" />}
       </Button>
       <Link className="text-sm" href={"/signup"}>
         Already have an account? Signin
       </Link>
+      {error && <p className="text-red-500">{error}</p>}
     </form>
   );
 }
