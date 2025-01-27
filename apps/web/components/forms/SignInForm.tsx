@@ -13,6 +13,7 @@ import axios from "axios";
 import { BACKEND_URL } from "@/config";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { setTokenCookie } from "@/lib/cookie";
 
 type SignupFormData = z.infer<typeof SignInSchema>;
 
@@ -37,6 +38,7 @@ export function SignInForm() {
       const response = await axios.post(`${BACKEND_URL}/auth/signin`, data);
       if (response.status === 201) {
         console.log("Signup successful:", response.data);
+        await setTokenCookie(response.data.token);
         router.push("/dashboard");
       }
       setLoading(false);
