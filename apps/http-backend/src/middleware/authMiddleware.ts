@@ -8,17 +8,23 @@ const authMiddleware = (
   next: NextFunction
 ): any => {
   try {
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
     if (!token) {
-      return res.status(401).send("Unauthorized");
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
     }
 
-    const [, tokenValue] = token.split(" ");
-    if (!tokenValue) {
-      return res.status(401).send("Unauthorized");
-    }
-
-    const decodedToken = jwt.verify(tokenValue, JWT_SECRET) as {
+    const decodedToken = jwt.verify(token, JWT_SECRET) as {
       userId: string;
     };
 

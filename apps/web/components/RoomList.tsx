@@ -1,16 +1,22 @@
 import Link from "next/link";
 import { Button } from "@workspace/ui/components/button";
-import axios from "axios";
 import { BACKEND_URL } from "@/config";
+import { getVerifiedToken } from "@/lib/cookie";
+import axios from "axios";
 
 type Room = {
   id: number;
-  name: string;
+  slug: string;
 };
-const getRooms = async () => {
+const getRooms = async (token: string | null) => {
+  if (!token) {
+    return [];
+  }
   try {
-    const response = await axios.get(`${BACKEND_URL}/rooms`);
-    console.log("Response:", response);
+    const response = await axios.get(`${BACKEND_URL}/rooms`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log("Response:", response.data);
     return response.data.rooms;
   } catch (error) {
     console.error("Error fetching rooms:", error);
@@ -19,7 +25,8 @@ const getRooms = async () => {
 };
 
 export async function RoomList() {
-  const rooms: Room[] = await getRooms();
+  const token = await getVerifiedToken();
+  const rooms: Room[] = await getRooms(token);
   return (
     <ul className="space-y-2">
       {rooms.map((room) => (
@@ -27,7 +34,7 @@ export async function RoomList() {
           key={room.id}
           className="flex items-center justify-between bg-gray-100 p-3 rounded"
         >
-          <span>{room.name}</span>
+          <span>{room.slug}</span>
           <Button asChild variant="outline">
             <Link href={`/room/${room.id}`}>Join</Link>
           </Button>

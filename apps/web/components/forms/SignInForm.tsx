@@ -35,7 +35,7 @@ export function SignInForm() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post(`${BACKEND_URL}/auth/signin`, data);
+      const response = await axios.post(`/auth/signin`, data);
       if (response.status === 201) {
         console.log("Signup successful:", response.data);
         await setTokenCookie(response.data.token);

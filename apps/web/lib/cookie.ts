@@ -10,7 +10,8 @@ export const setTokenCookie = async (token: string) => {
     name: "token",
     value: token,
     expires: expireDate,
-    httpOnly: true,
+    httpOnly: false,
+    sameSite: false,
   });
 };
 
