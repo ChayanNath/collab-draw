@@ -52,7 +52,6 @@ wss.on("connection", (ws, request) => {
       if (!userRoom) {
         return ws.close();
       }
-      console.log(userRoom);
       userRoom.rooms.push(roomId);
       ws.send(JSON.stringify({ type: "join", roomId }));
     }

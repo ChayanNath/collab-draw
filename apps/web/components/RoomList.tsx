@@ -16,7 +16,6 @@ const getRooms = async (token: string | null) => {
     const response = await axios.get(`${BACKEND_URL}/rooms`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("Response:", response.data);
     return response.data.rooms;
   } catch (error) {
     console.error("Error fetching rooms:", error);
