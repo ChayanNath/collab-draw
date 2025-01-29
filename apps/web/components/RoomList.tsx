@@ -35,7 +35,7 @@ export async function RoomList() {
         >
           <span>{room.slug}</span>
           <Button asChild variant="outline">
-            <Link href={`/room/${room.id}`}>Join</Link>
+            <Link href={`/canvas/${room.id}`}>Join</Link>
           </Button>
         </li>
       ))}
