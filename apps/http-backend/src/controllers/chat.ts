@@ -4,8 +4,9 @@ import { Request, Response } from "express";
 export const getChat = async (req: Request, res: Response): Promise<any> => {
   try {
     const roomId = Number(req.params.roomId);
+    console.log(req.params);
     if (!roomId) {
-      res.status(400).json({ message: "Invalid request" });
+      res.status(400).json({ message: "Room Id is required" });
       return;
     }
     const chats = await prismaClient.chat.findMany({
