@@ -1,6 +1,6 @@
-import Canvas from "@/components/Canvas";
+import { CanvasWrapper } from "@/components/CanvasWrapper";
 
-export default async function CanvasWrapper({
+export default async function CanvasLanding({
   params,
 }: {
   params: { slug: string };
@@ -9,7 +9,7 @@ export default async function CanvasWrapper({
 
   return (
     <div className="relative">
-      <Canvas slug={slug} />
+      <CanvasWrapper roomId={slug} />
     </div>
   );
 }

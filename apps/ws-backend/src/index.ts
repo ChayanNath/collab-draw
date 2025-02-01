@@ -42,53 +42,68 @@ wss.on("connection", (ws, request) => {
   users.push({ userId, ws, rooms: [] });
 
   ws.on("message", async (message) => {
-    const data = JSON.parse(message as unknown as string);
-    if (data.type === "join") {
-      const roomId = data.roomId;
-      if (!roomId) {
-        return ws.close();
-      }
-      const userRoom = users.find((user) => user.ws === ws);
-      if (!userRoom) {
-        return ws.close();
-      }
-      userRoom.rooms.push(roomId);
-      ws.send(JSON.stringify({ type: "join", roomId }));
-    }
+    try {
+      const data = JSON.parse(message as unknown as string);
+      console.log("Received message:", data);
 
-    if (data.type === "leave") {
-      const roomId = data.roomId;
-      if (!roomId) {
-        return;
-      }
-      const userRoom = users.find((user) => user.ws === ws);
-      if (!userRoom) {
-        return;
-      }
-      userRoom.rooms = userRoom.rooms.filter((id) => id !== roomId);
-      ws.send(JSON.stringify({ type: "leave", roomId }));
-    }
-
-    if (data.type === "chat") {
-      const roomId = data.roomId;
-      const message = data.message;
-
-      if (!roomId || !message) {
-        return;
-      }
-
-      await prismaClient.chat.create({
-        data: {
-          roomId,
-          message,
-          userId,
-        },
-      });
-      users.forEach((user) => {
-        if (user.rooms.includes(roomId)) {
-          user.ws.send(JSON.stringify({ type: "chat", message, roomId }));
+      if (data.type === "join") {
+        const roomId = Number(data.roomId);
+        if (!roomId) {
+          return ws.close();
         }
-      });
+        const userRoom = users.find((user) => user.userId === userId);
+        console.log("Found user:", userRoom);
+        if (!userRoom) {
+          return ws.close();
+        }
+        userRoom.rooms.push(roomId);
+        console.log("Updated rooms:", userRoom.rooms);
+        ws.send(JSON.stringify({ type: "join", roomId }));
+      }
+
+      if (data.type === "leave") {
+        const roomId = Number(data.roomId);
+        if (!roomId) {
+          return;
+        }
+        const userRoom = users.find((user) => user.userId === userId);
+        if (!userRoom) {
+          return;
+        }
+        userRoom.rooms = userRoom.rooms.filter((id) => id !== roomId);
+        ws.send(JSON.stringify({ type: "leave", roomId }));
+      }
+
+      if (data.type === "chat") {
+        const roomId = Number(data.roomId);
+        const message = data.message;
+
+        if (!roomId || !message) {
+          return;
+        }
+
+        await prismaClient.chat.create({
+          data: {
+            roomId,
+            message,
+            userId,
+          },
+        });
+        users.forEach((user) => {
+          if (user.rooms.includes(roomId)) {
+            user.ws.send(JSON.stringify({ type: "chat", message, roomId }));
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error processing message:", error);
+    }
+  });
+
+  ws.on("close", () => {
+    const index = users.findIndex((user) => user.userId === userId);
+    if (index !== -1) {
+      users.splice(index, 1);
     }
   });
 });

@@ -1,16 +1,29 @@
 "use client";
 
-import { initDraw } from "@/app/draw";
-import { Button } from "@workspace/ui/components/button";
-import { Circle, Minus, Square } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Canvas, Tool } from "@/app/draw/Canvas";
+import { Actionbar } from "./Actionbar";
 
-export default function Canvas({ slug }: { slug: string }) {
+export default function CanvasRenderer({
+  roomId,
+  socket,
+}: {
+  roomId: string;
+  socket: WebSocket;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [canvas, setCanvas] = useState<Canvas>();
+  const [tool, setTool] = useState<Tool>("rect");
 
   useEffect(() => {
+    canvas?.setTool(tool);
+  }, [tool, canvas]);
+
+  useEffect(() => {
+    let c: Canvas;
     if (canvasRef.current) {
-      initDraw(canvasRef.current, slug);
+      c = new Canvas(canvasRef.current, roomId, socket);
+      setCanvas(c);
     }
 
     const disableScroll = (e: Event) => e.preventDefault();
@@ -20,8 +33,9 @@ export default function Canvas({ slug }: { slug: string }) {
     return () => {
       document.body.style.overflow = "auto";
       document.removeEventListener("wheel", disableScroll);
+      c.destroy();
     };
-  }, []);
+  }, [canvasRef, roomId, socket]);
 
   return (
     <div>
@@ -29,17 +43,7 @@ export default function Canvas({ slug }: { slug: string }) {
         ref={canvasRef}
         className="fixed top-0 left-0 w-screen h-screen"
       ></canvas>
-      <div className="fixed top-50 left-50 flex items-center justify-center gap-2 p-2">
-        <Button size="icon" title="Circle">
-          <Circle />
-        </Button>
-        <Button size="icon" title="Rectangle">
-          <Square />
-        </Button>
-        <Button size="icon" title="Line">
-          <Minus />
-        </Button>
-      </div>
+      <Actionbar setSelectedTool={setTool} tool={tool} />
     </div>
   );
 }

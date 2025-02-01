@@ -1,18 +1,28 @@
 import { useEffect, useState } from "react";
 import { WS_URL } from "@/config";
+import { getVerifiedToken } from "@/lib/cookie";
 
 export function useSocket() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
   useEffect(() => {
-    const socket = new WebSocket(WS_URL);
-    setSocket(socket);
+    (async () => {
+      const token = await getVerifiedToken();
+      const ws = new WebSocket(`${WS_URL}?token=${token}`);
 
-    socket.onopen = () => {
-      console.log("WebSocket connection established");
-      setLoading(false);
-      setSocket(socket);
+      ws.onopen = () => {
+        console.log("WebSocket connection established");
+        setLoading(false);
+      };
+
+      setSocket(ws);
+    })();
+
+    return () => {
+      if (socket) {
+        socket.close();
+      }
     };
   }, []);
 
