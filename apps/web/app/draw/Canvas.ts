@@ -1,4 +1,3 @@
-import { getVerifiedToken } from "@/lib/cookie";
 import { getExistingShapes } from "./api";
 
 export type Shape =
@@ -51,13 +50,11 @@ export class Canvas {
   }
 
   async init() {
-    // Set initial black background
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Load existing shapes
+    this.canvas.width = window.innerWidth;
+    this.canvas.height = window.innerHeight;
     this.existingShapes = await getExistingShapes(this.roomId);
-    // Draw existing shapes in white
     this.drawExistingShapes();
   }
 
@@ -83,10 +80,8 @@ export class Canvas {
 
   clearCanvas() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    // Redraw black background
     this.ctx.fillStyle = "black";
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-    // Redraw all shapes in white
     this.drawExistingShapes();
   }
 
@@ -162,7 +157,6 @@ export class Canvas {
       const width = e.clientX - this.startX;
       const height = e.clientY - this.startY;
       this.clearCanvas();
-      // Set stroke style to white for drawing
       this.ctx.strokeStyle = "white";
       const selectedTool = this.selectedTool;
       if (selectedTool === "rect") {
