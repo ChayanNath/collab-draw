@@ -7,21 +7,33 @@ export function useSocket() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
   useEffect(() => {
+    let wsInstance: WebSocket | null = null;
+
     (async () => {
-      const token = await getVerifiedToken();
-      const ws = new WebSocket(`${WS_URL}?token=${token}`);
+      try {
+        const token = await getVerifiedToken();
+        const ws = new WebSocket(`${WS_URL}?token=${token}`);
+        wsInstance = ws;
 
-      ws.onopen = () => {
-        console.log("WebSocket connection established");
+        ws.onopen = () => {
+          console.log("WebSocket connection established");
+          setLoading(false);
+          setSocket(ws);
+        };
+
+        ws.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          setLoading(false);
+        };
+      } catch (error) {
+        console.error("Failed to initialize WebSocket:", error);
         setLoading(false);
-      };
-
-      setSocket(ws);
+      }
     })();
 
     return () => {
-      if (socket) {
-        socket.close();
+      if (wsInstance) {
+        wsInstance.close();
       }
     };
   }, []);

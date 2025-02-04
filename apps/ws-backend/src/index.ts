@@ -44,7 +44,42 @@ wss.on("connection", (ws, request) => {
   ws.on("message", async (message) => {
     try {
       const data = JSON.parse(message as unknown as string);
-      console.log("Received message:", data);
+
+      if (data.type === "shape_update") {
+        const roomId = Number(data.roomId);
+        if (!roomId) {
+          return;
+        }
+
+        // First verify the user is in the room
+        const userRoom = users.find((user) => user.userId === userId);
+        if (!userRoom || !userRoom.rooms.includes(roomId)) {
+          return;
+        }
+
+        // Save to database
+        await prismaClient.chat.create({
+          data: {
+            roomId,
+            message: data.message,
+            userId,
+          },
+        });
+
+        // Broadcast to ALL users in the room, including sender
+        users.forEach((user) => {
+          if (user.rooms.includes(roomId)) {
+            user.ws.send(
+              JSON.stringify({
+                type: "shape_update",
+                message: data.message,
+                roomId,
+                userId: userId, // Include userId to identify who made the change
+              })
+            );
+          }
+        });
+      }
 
       if (data.type === "join") {
         const roomId = Number(data.roomId);
@@ -52,12 +87,10 @@ wss.on("connection", (ws, request) => {
           return ws.close();
         }
         const userRoom = users.find((user) => user.userId === userId);
-        console.log("Found user:", userRoom);
         if (!userRoom) {
           return ws.close();
         }
         userRoom.rooms.push(roomId);
-        console.log("Updated rooms:", userRoom.rooms);
         ws.send(JSON.stringify({ type: "join", roomId }));
       }
 
@@ -77,7 +110,7 @@ wss.on("connection", (ws, request) => {
       if (data.type === "chat") {
         const roomId = Number(data.roomId);
         const message = data.message;
-
+        console.log(data);
         if (!roomId || !message) {
           return;
         }
@@ -89,6 +122,7 @@ wss.on("connection", (ws, request) => {
             userId,
           },
         });
+        console.log(users);
         users.forEach((user) => {
           if (user.rooms.includes(roomId)) {
             user.ws.send(JSON.stringify({ type: "chat", message, roomId }));

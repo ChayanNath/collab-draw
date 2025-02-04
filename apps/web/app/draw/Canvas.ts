@@ -13,6 +13,13 @@ export type Shape =
       centerX: number;
       centerY: number;
       radius: number;
+    }
+  | {
+      type: "line";
+      startX: number;
+      startY: number;
+      endX: number;
+      endY: number;
     };
 
 export type Tool =
@@ -34,7 +41,13 @@ export class Canvas {
   private startX: number;
   private startY: number;
   private selectedTool: Tool;
-  constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
+  private userId: string;
+  constructor(
+    canvas: HTMLCanvasElement,
+    roomId: string,
+    socket: WebSocket,
+    userId: string
+  ) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.existingShapes = [];
@@ -44,16 +57,17 @@ export class Canvas {
     this.startX = 0;
     this.startY = 0;
     this.selectedTool = "rect";
+    this.userId = userId;
     this.init();
     this.initHandlers();
     this.initMouseHandlers();
   }
 
   async init() {
-    this.ctx.fillStyle = "black";
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.canvas.width = window.innerWidth;
     this.canvas.height = window.innerHeight;
+    this.ctx.fillStyle = "black";
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     this.existingShapes = await getExistingShapes(this.roomId);
     this.drawExistingShapes();
   }
@@ -72,6 +86,12 @@ export class Canvas {
           0,
           Math.PI * 2
         );
+        this.ctx.stroke();
+        this.ctx.closePath();
+      } else if (shape.type === "line") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(shape.startX, shape.startY);
+        this.ctx.lineTo(shape.endX, shape.endY);
         this.ctx.stroke();
         this.ctx.closePath();
       }
@@ -97,21 +117,28 @@ export class Canvas {
 
   initHandlers() {
     this.socket.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      if (message.type === "chat") {
-        const parsedShape = JSON.parse(message.message);
-        this.existingShapes.push(parsedShape);
-        this.clearCanvas();
+      try {
+        const message = JSON.parse(event.data);
+        console.log("Received WebSocket message:", message);
+
+        if (message.type === "shape_update") {
+          const parsedShape = JSON.parse(message.message);
+          console.log("Received shape:", parsedShape);
+
+          this.existingShapes.push(parsedShape);
+          this.clearCanvas();
+        }
+      } catch (error) {
+        console.error("Error handling WebSocket message:", error);
       }
     };
   }
 
-  mouseDownHandler(e: MouseEvent) {
-    console.log("here");
+  mouseDownHandler = (e: MouseEvent) => {
     this.clicked = true;
     this.startX = e.clientX;
     this.startY = e.clientY;
-  }
+  };
 
   mouseUpHandler = (e: MouseEvent) => {
     this.clicked = false;
@@ -129,12 +156,25 @@ export class Canvas {
         width,
       };
     } else if (selectedTool === "circle") {
-      const radius = Math.max(width, height) / 2;
+      const centerX = this.startX;
+      const centerY = this.startY;
+      const radius = Math.sqrt(
+        Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2)
+      );
+
       shape = {
         type: "circle",
-        radius: radius,
-        centerX: this.startX + radius,
-        centerY: this.startY + radius,
+        radius,
+        centerX,
+        centerY,
+      };
+    } else if (selectedTool === "line") {
+      shape = {
+        type: "line",
+        startX: this.startX,
+        startY: this.startY,
+        endX: e.clientX,
+        endY: e.clientY,
       };
     }
 
@@ -144,11 +184,12 @@ export class Canvas {
 
     this.existingShapes.push(shape);
 
+    // Send the shape update
     this.socket.send(
       JSON.stringify({
-        type: "chat",
+        type: "shape_update",
         message: JSON.stringify(shape),
-        roomId: this.roomId,
+        roomId: Number(this.roomId),
       })
     );
   };
@@ -162,11 +203,20 @@ export class Canvas {
       if (selectedTool === "rect") {
         this.ctx.strokeRect(this.startX, this.startY, width, height);
       } else if (selectedTool === "circle") {
-        const radius = Math.max(width, height) / 2;
-        const centerX = this.startX + radius;
-        const centerY = this.startY + radius;
+        const centerX = this.startX;
+        const centerY = this.startY;
+        const radius = Math.sqrt(
+          Math.pow(e.clientX - centerX, 2) + Math.pow(e.clientY - centerY, 2)
+        );
+
         this.ctx.beginPath();
-        this.ctx.arc(centerX, centerY, Math.abs(radius), 0, Math.PI * 2);
+        this.ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        this.ctx.stroke();
+        this.ctx.closePath();
+      } else if (selectedTool === "line") {
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.startX, this.startY);
+        this.ctx.lineTo(e.clientX, e.clientY);
         this.ctx.stroke();
         this.ctx.closePath();
       }
