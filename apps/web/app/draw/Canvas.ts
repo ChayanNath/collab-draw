@@ -20,6 +20,10 @@ export type Shape =
       startY: number;
       endX: number;
       endY: number;
+    }
+  | {
+      type: "pencil";
+      points: { x: number; y: number }[];
     };
 
 export type Tool =
@@ -42,6 +46,8 @@ export class Canvas {
   private startY: number;
   private selectedTool: Tool;
   private userId: string;
+
+  private pencilPoints: { x: number; y: number }[] = [];
   constructor(
     canvas: HTMLCanvasElement,
     roomId: string,
@@ -94,6 +100,17 @@ export class Canvas {
         this.ctx.lineTo(shape.endX, shape.endY);
         this.ctx.stroke();
         this.ctx.closePath();
+      } else if (shape.type === "pencil") {
+        this.ctx.beginPath();
+        shape.points.forEach((point, index) => {
+          if (index === 0) {
+            this.ctx.moveTo(point.x, point.y);
+          } else {
+            this.ctx.lineTo(point.x, point.y);
+          }
+        });
+        this.ctx.stroke();
+        this.ctx.closePath();
       }
     });
   }
@@ -138,6 +155,9 @@ export class Canvas {
     this.clicked = true;
     this.startX = e.clientX;
     this.startY = e.clientY;
+    if (this.selectedTool === "pencil") {
+      this.pencilPoints.push({ x: e.clientX, y: e.clientY });
+    }
   };
 
   mouseUpHandler = (e: MouseEvent) => {
@@ -176,6 +196,17 @@ export class Canvas {
         endX: e.clientX,
         endY: e.clientY,
       };
+    } else if (selectedTool === "pencil") {
+      this.ctx.stroke();
+      this.ctx.beginPath();
+      const shape: Shape = {
+        type: "pencil",
+
+        points: this.pencilPoints,
+      };
+
+      this.existingShapes.push(shape);
+      this.pencilPoints = [];
     }
 
     if (!shape) {
@@ -216,6 +247,13 @@ export class Canvas {
       } else if (selectedTool === "line") {
         this.ctx.beginPath();
         this.ctx.moveTo(this.startX, this.startY);
+        this.ctx.lineTo(e.clientX, e.clientY);
+        this.ctx.stroke();
+        this.ctx.closePath();
+      } else if (selectedTool === "pencil") {
+        this.pencilPoints.push({ x: e.clientX, y: e.clientY });
+        this.ctx.lineWidth = 5;
+        this.ctx.lineCap = "round";
         this.ctx.lineTo(e.clientX, e.clientY);
         this.ctx.stroke();
         this.ctx.closePath();

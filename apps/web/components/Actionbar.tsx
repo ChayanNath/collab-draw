@@ -1,6 +1,6 @@
 import { Tool } from "@/app/draw/Canvas";
 import { Button } from "@workspace/ui/components/button";
-import { Circle, Square, Minus } from "lucide-react";
+import { Circle, Square, Minus, Pencil } from "lucide-react";
 
 export function Actionbar({
   tool,
@@ -36,6 +36,14 @@ export function Actionbar({
         onClick={() => setSelectedTool("line")}
       >
         <Minus />
+      </Button>
+      <Button
+        size="icon"
+        title="Pencil"
+        className={tool === "pencil" ? activeClass : inactiveClass}
+        onClick={() => setSelectedTool("pencil")}
+      >
+        <Pencil />
       </Button>
     </div>
   );
