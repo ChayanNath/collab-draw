@@ -156,7 +156,12 @@ export class Canvas {
     this.startX = e.clientX;
     this.startY = e.clientY;
     if (this.selectedTool === "pencil") {
-      this.pencilPoints.push({ x: e.clientX, y: e.clientY });
+      this.pencilPoints = [{ x: e.clientX, y: e.clientY }];
+      this.ctx.beginPath();
+      this.ctx.moveTo(e.clientX, e.clientY);
+      this.ctx.strokeStyle = "white";
+      this.ctx.lineWidth = 2;
+      this.ctx.lineCap = "round";
     }
   };
 
@@ -197,15 +202,10 @@ export class Canvas {
         endY: e.clientY,
       };
     } else if (selectedTool === "pencil") {
-      this.ctx.stroke();
-      this.ctx.beginPath();
-      const shape: Shape = {
+      shape = {
         type: "pencil",
-
         points: this.pencilPoints,
       };
-
-      this.existingShapes.push(shape);
       this.pencilPoints = [];
     }
 
@@ -251,12 +251,11 @@ export class Canvas {
         this.ctx.stroke();
         this.ctx.closePath();
       } else if (selectedTool === "pencil") {
-        this.pencilPoints.push({ x: e.clientX, y: e.clientY });
-        this.ctx.lineWidth = 5;
-        this.ctx.lineCap = "round";
-        this.ctx.lineTo(e.clientX, e.clientY);
+        const point = { x: e.clientX, y: e.clientY };
+        this.pencilPoints.push(point);
+
+        this.ctx.lineTo(point.x, point.y);
         this.ctx.stroke();
-        this.ctx.closePath();
       }
     }
   };
