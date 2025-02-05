@@ -1,15 +1,13 @@
+"use client";
 import { CanvasWrapper } from "@/components/CanvasWrapper";
-
-export default function CanvasLanding({
-  params,
-}: {
-  params: { slug: string };
-}) {
+import { useParams } from "next/navigation";
+export default function CanvasLanding() {
+  const params = useParams();
   const { slug } = params;
 
   return (
     <div className="relative">
-      <CanvasWrapper roomId={slug} />
+      <CanvasWrapper roomId={slug as string} />
     </div>
   );
 }
