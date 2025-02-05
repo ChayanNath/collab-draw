@@ -96,9 +96,12 @@ export function SignUpForm() {
       <Button type="submit" className="w-full">
         Sign Up {loading && <Loader2 className="animate-spin" />}
       </Button>
-      <Link className="text-sm" href={"/signup"}>
-        Already have an account? Signin
-      </Link>
+      <div className="text-center text-sm">
+        Already have an account?{" "}
+        <Link href="/signin" className="text-blue-500 hover:underline">
+          Sign In
+        </Link>
+      </div>
       {error && <p className="text-red-500">{error}</p>}
     </form>
   );

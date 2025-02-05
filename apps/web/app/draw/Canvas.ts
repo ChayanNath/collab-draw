@@ -45,15 +45,9 @@ export class Canvas {
   private startX: number;
   private startY: number;
   private selectedTool: Tool;
-  private userId: string;
 
   private pencilPoints: { x: number; y: number }[] = [];
-  constructor(
-    canvas: HTMLCanvasElement,
-    roomId: string,
-    socket: WebSocket,
-    userId: string
-  ) {
+  constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d")!;
     this.existingShapes = [];
@@ -63,7 +57,6 @@ export class Canvas {
     this.startX = 0;
     this.startY = 0;
     this.selectedTool = "rect";
-    this.userId = userId;
     this.init();
     this.initHandlers();
     this.initMouseHandlers();
