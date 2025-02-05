@@ -1,11 +1,11 @@
 import { CanvasWrapper } from "@/components/CanvasWrapper";
 
-export default async function CanvasLanding({
+export default function CanvasLanding({
   params,
 }: {
   params: { slug: string };
 }) {
-  const slug = (await params).slug;
+  const { slug } = params;
 
   return (
     <div className="relative">
