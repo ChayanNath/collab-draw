@@ -14,6 +14,7 @@ export default function CanvasRenderer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<Canvas>();
   const [tool, setTool] = useState<Tool>("rect");
+  const [scale, setScale] = useState(1);
 
   useEffect(() => {
     canvas?.setTool(tool);
@@ -33,17 +34,43 @@ export default function CanvasRenderer({
     return () => {
       document.body.style.overflow = "auto";
       document.removeEventListener("wheel", disableScroll);
-      c.destroy();
+      c?.destroy();
     };
-  }, [canvasRef, roomId, socket]);
+  }, [roomId, socket]);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "h") {
+        setTool("pan");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, []);
+
+  useEffect(() => {
+    const handleScaleChange = (newScale: number) => {
+      setScale(newScale);
+    };
+
+    if (canvas) {
+      canvas.onScaleChange = handleScaleChange;
+    }
+  }, [canvas]);
 
   return (
     <div>
       <canvas
         ref={canvasRef}
         className="fixed top-0 left-0 w-screen h-screen"
-      ></canvas>
-      <Actionbar setSelectedTool={setTool} tool={tool} />
+      />
+      <Actionbar
+        tool={tool}
+        setSelectedTool={setTool}
+        onResetView={() => canvas?.resetView()}
+        scale={scale}
+      />
     </div>
   );
 }
