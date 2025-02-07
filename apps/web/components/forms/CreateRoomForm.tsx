@@ -32,9 +32,14 @@ export function CreateRoomForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="roomName">Room Name</Label>
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-row gap-3 items-center justify-center"
+    >
+      <div className="flex flex-row gap-2 items-center justify-center">
+        <Label htmlFor="roomName" className="block whitespace-nowrap">
+          Room Name
+        </Label>
         <Input
           id="roomName"
           value={roomName}

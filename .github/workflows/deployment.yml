@@ -1,4 +1,4 @@
-name: Deploy to staging
+name: Deploy to Production
 
 on:
   push:
@@ -7,13 +7,26 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to staging
+    name: Deploy to Production
     runs-on: ubuntu-latest
     steps:
-      - name: SSH into server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USERNAME }}
-          port: ${{ secrets.STAGING_PORT }}
-          script: whoami
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        run: |
+          echo "${{ secrets.STAGING_SSH_KEY }}" > private_key
+          chmod 700 private_key
+          eval $(ssh-agent -s)
+          ssh-add private_key
+
+      - name: SSH into server and deploy
+        run: |
+          ssh -o StrictHostKeyChecking=no -p ${{ secrets.STAGING_PORT }} \
+          ${{ secrets.STAGING_USERNAME }}@${{ secrets.STAGING_HOST }} << 'EOF'
+            cd /path/to/your/project
+            git pull origin main
+            npm install # or yarn install
+            npm run build # or whatever build command you need
+            pm2 restart all # or restart your service
+          EOF
