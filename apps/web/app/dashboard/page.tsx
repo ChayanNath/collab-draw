@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardContent,
 } from "@workspace/ui/components/card";
-import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BACKEND_URL } from "@/config";
 import axios from "axios";
@@ -25,7 +24,7 @@ type Room = {
 export default function Dashboard() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRooms = async () => {
