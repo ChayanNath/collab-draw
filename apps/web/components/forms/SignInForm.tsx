@@ -14,6 +14,8 @@ import { BACKEND_URL } from "@/config";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { setTokenCookie } from "@/lib/cookie";
+import { AxiosError } from "axios";
+import { useToast } from "@workspace/ui/hooks/use-toast";
 
 type SignInFormData = z.infer<typeof SignInSchema>;
 
@@ -21,6 +23,7 @@ export function SignInForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { toast } = useToast();
 
   const {
     register,
@@ -34,14 +37,21 @@ export function SignInForm() {
     try {
       setLoading(true);
       setError("");
-
       const response = await axios.post(`${BACKEND_URL}/auth/signin`, data);
       const token = response.data.token;
-
       await setTokenCookie(token);
       router.push("/dashboard");
-    } catch (error: any) {
-      setError(error.response?.data?.message || "An error occurred");
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.message || "An error occurred");
+      } else {
+        setError("An error occurred");
+      }
+      toast({
+        title: "Error",
+        description: error || "An error occurred",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

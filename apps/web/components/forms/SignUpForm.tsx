@@ -8,17 +8,19 @@ import { CreateUserSchema } from "@workspace/common/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import Link from "next/link";
 import { BACKEND_URL } from "@/config";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@workspace/ui/hooks/use-toast";
 
 type SignupFormData = z.infer<typeof CreateUserSchema>;
 
 export function SignUpForm() {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const {
     register,
@@ -28,26 +30,31 @@ export function SignUpForm() {
     resolver: zodResolver(CreateUserSchema),
   });
 
-  const router = useRouter();
-
   const onSubmit = async (data: SignupFormData) => {
     try {
       setLoading(true);
-      setError(null);
-      const response = await axios.post(`${BACKEND_URL}/auth/signup`, data);
-      if (response.status === 201) {
-        console.log("Signup successful:", response.data);
-        router.push("/signin");
-      }
-      setLoading(false);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        console.error("Axios error:", error.response?.data || error.message);
-        setError(error.response?.data || error.message);
+      await axios.post(`${BACKEND_URL}/auth/signup`, data);
+      toast({
+        title: "Success",
+        description: "Account created successfully!",
+      });
+      router.push("/signin");
+    } catch (err: unknown) {
+      if (err instanceof AxiosError) {
+        toast({
+          title: "Error",
+          description:
+            err.response?.data?.message || "Failed to create account",
+          variant: "destructive",
+        });
       } else {
-        console.error("Unexpected error:", error);
-        setError("Unexpected error");
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        });
       }
+    } finally {
       setLoading(false);
     }
   };
@@ -102,7 +109,6 @@ export function SignUpForm() {
           Sign In
         </Link>
       </div>
-      {error && <p className="text-red-500">{error}</p>}
     </form>
   );
 }

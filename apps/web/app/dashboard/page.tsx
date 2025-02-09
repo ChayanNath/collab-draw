@@ -14,6 +14,8 @@ import { BACKEND_URL } from "@/config";
 import axios from "axios";
 import { getVerifiedToken } from "@/lib/cookie";
 import { CreateRoomForm } from "@/components/forms/CreateRoomForm";
+import { useToast } from "@workspace/ui/hooks/use-toast";
+import { AxiosError } from "axios";
 
 type Room = {
   id: number;
@@ -25,21 +27,39 @@ export default function Dashboard() {
   const router = useRouter();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchRooms = async () => {
-      setLoading(true);
-      const token = await getVerifiedToken();
-      const response = await axios.get(`${BACKEND_URL}/rooms`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setRooms(response.data.rooms);
-      setLoading(false);
+      try {
+        setLoading(true);
+        const token = await getVerifiedToken();
+        const response = await axios.get(`${BACKEND_URL}/rooms`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setRooms(response.data.rooms);
+      } catch (err: unknown) {
+        if (err instanceof AxiosError) {
+          toast({
+            title: "Error",
+            description: err.response?.data?.message || "Failed to fetch rooms",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: "An unexpected error occurred",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        setLoading(false);
+      }
     };
     fetchRooms();
-  }, []);
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-background p-6">
